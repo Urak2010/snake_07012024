@@ -17,7 +17,7 @@ SIZE_X = WIDTH // BLOCK_SIZE - WALL_BLOCKS * 2
 SIZE_Y = HEIGHT // BLOCK_SIZE - WALL_BLOCKS * 2
 SNAKE_RADIUS = BLOCK_SIZE //4
 APPLE_RADIUS = int(BLOCK_SIZE // 2.5)
-EYE_SIZE = BLOCK_SIZE // 5
+EYE_SIZE = BLOCK_SIZE // 6
 
 BACKGROUND_COLOR = (0, 0, 0)
 
@@ -73,7 +73,9 @@ def initialize_game_state():
                   "game_paused" : False,
                   "game_speed": INITIAl_GAME_SPEED,
                   "score" : 0,
-                  "apples":[]}
+                  "apples":[],
+                  "max_score": 0
+                  }
     #     print("Это выход Initialize_game_state")
     #     print(game_state)
     return game_state
@@ -126,6 +128,7 @@ def check_key_presses(events, game_state):
     elif game_state["game_paused"]:
         if "escape" in events:
             game_state["game_running"] = False
+
         elif "space" in events:
             game_state["game_paused"] = False
     else:
@@ -161,11 +164,18 @@ def check_apple_consumption(game_state):
             game_state["apples"].remove(apple)
             place_apples(1, game_state)
             game_state["score"] += 1
+            update_max_score(game_state)
             apples_eaten += 1
             game_state["game_speed"] = round(game_state["game_speed"] * SPEED_CHANGE)
     if apples_eaten == 0:
         game_state["snake"].pop()
+
+#=====================================================
+def update_max_score(game_state):
+    if game_state["score"] > game_state["max_score"]:
+            game_state["max_score"] = game_state["score"]
 #=========================================
+
 def initialize_new_game(game_state):
     # положение змейки
     # положение яблока
@@ -182,6 +192,7 @@ def initialize_new_game(game_state):
     game_state["game_paused"] = False
     game_state["game_score"] = 0
     game_state["game_speed"] = INITIAl_GAME_SPEED
+
 #===================================================
 def place_snake(length, game_state):
     #game_state["snake"] =
@@ -224,6 +235,7 @@ def update_screen(screen, game_state):
         draw_snake(screen, game_state["snake"], game_state["direction"])
     draw_walls(screen)
     print_score(screen, game_state["score"])
+    print_max_score(screen, game_state["max_score"])
     pygame.display.flip()
 #===========================================
 def print_new_game_message(screen):
@@ -268,7 +280,7 @@ def draw_snake(screen, snake, direction):
 #===================================
 def draw_snake_eyes(screen, head, direction):
     wall_size = WALL_BLOCKS * BLOCK_SIZE
-    eye_offset = BLOCK_SIZE // 5
+    eye_offset = BLOCK_SIZE // 4
     x, y = (direction[0], direction[1])
     if x == - 1 or y == -1:
         # верхний левый глаз
@@ -278,11 +290,21 @@ def draw_snake_eyes(screen, head, direction):
         pygame.draw.circle(screen, EYE_COLOR, center, EYE_SIZE)
 
     if x == - 1 or y == 1:
-        pass # нижний левый глаз
+        coord_x = head[0] * BLOCK_SIZE + wall_size + eye_offset
+        coord_y = head[1] * BLOCK_SIZE + wall_size + (BLOCK_SIZE - eye_offset)
+        center = (coord_x, coord_y)
+        pygame.draw.circle(screen, EYE_COLOR, center, EYE_SIZE)
     if x == 1 or y == -1:
-        pass # верхний правый глаз
+        coord_x = head[0] * BLOCK_SIZE + wall_size + (BLOCK_SIZE - eye_offset)
+        coord_y = head[1] * BLOCK_SIZE + wall_size + eye_offset
+        center = (coord_x, coord_y)
+        pygame.draw.circle(screen, EYE_COLOR, center, EYE_SIZE)
     if x == 1 or y == 1:
-        pass # нижний правый глаз
+        coord_x = head[0] * BLOCK_SIZE + wall_size + (BLOCK_SIZE - eye_offset)
+        coord_y = head[1] * BLOCK_SIZE + wall_size + (BLOCK_SIZE - eye_offset)
+        center = (coord_x, coord_y)
+        pygame.draw.circle(screen, EYE_COLOR, center, EYE_SIZE)
+        pygame.draw.circle(screen, EYE_COLOR, center, EYE_SIZE)
 
 
 def draw_walls(screen):
@@ -299,6 +321,14 @@ def print_score(screen, score):
     text_rect = text.get_rect()
     text_rect.midleft = (wall_size, wall_size // 2)
     screen.blit(text, text_rect)
+#=====================================
+def print_max_score(screen, max_score):
+    wall_size = WALL_BLOCKS * BLOCK_SIZE
+    font = pygame.font.SysFont("Courier New", FONT_SIZE, bold=True)
+    text = font.render("Hi Score: " + str(max_score), True, TEXT_COLOR)
+    text_rect = text.get_rect()
+    text_rect.midright = (WIDTH -wall_size, wall_size // 2)
+    screen.blit(text, text_rect)
 
 #===================================
 
@@ -310,7 +340,8 @@ def perform_shutdown():
 
 #=======================================================================
 
-main()
+if __name__ == "__main__":
+    main()
 
 # for event in pygame.event.get():
 #     if event.type == pygame.QUIT:
